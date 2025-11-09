@@ -1,0 +1,265 @@
+import heapq
+from collections import deque
+
+# ---------- 1. SELECTION SORT ----------
+def selection_sort(arr):
+    n = len(arr)
+    for i in range(n):
+        min_idx = i
+        for j in range(i + 1, n):
+            if arr[j] < arr[min_idx]:
+                min_idx = j
+        arr[i], arr[min_idx] = arr[min_idx], arr[i]
+    return arr
+
+
+# ---------- 2. JOB SCHEDULING ----------
+def job_scheduling(jobs):
+    jobs.sort(key=lambda x: x[2], reverse=True)
+    max_deadline = max(job[1] for job in jobs)
+    result = [None] * (max_deadline + 1)
+    total_profit = 0
+    for job in jobs:
+        job_id, deadline, profit = job
+        for slot in range(deadline, 0, -1):
+            if result[slot] is None:
+                result[slot] = job_id
+                total_profit += profit
+                break
+    scheduled_jobs = [job for job in result if job is not None]
+    return scheduled_jobs, total_profit
+
+
+# ---------- 3. PRIM'S MST ----------
+def prim_mst(graph):
+    start_node = next(iter(graph))
+    visited = set()
+    min_heap = [(0, start_node)]
+    total_weight = 0
+    while min_heap and len(visited) < len(graph):
+        weight, node = heapq.heappop(min_heap)
+        if node in visited:
+            continue
+        visited.add(node)
+        total_weight += weight
+        for neighbor, w in graph[node]:
+            if neighbor not in visited:
+                heapq.heappush(min_heap, (w, neighbor))
+    return total_weight
+
+
+# ---------- 4. KRUSKAL'S MST ----------
+class DisjointSet:
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.rank = [0]*n
+
+    def find(self, u):
+        if self.parent[u] != u:
+            self.parent[u] = self.find(self.parent[u])
+        return self.parent[u]
+
+    def union(self, u, v):
+        root_u = self.find(u)
+        root_v = self.find(v)
+        if root_u == root_v:
+            return False
+        if self.rank[root_u] < self.rank[root_v]:
+            self.parent[root_u] = root_v
+        elif self.rank[root_v] < self.rank[root_u]:
+            self.parent[root_v] = root_u
+        else:
+            self.parent[root_v] = root_u
+            self.rank[root_u] += 1
+        return True
+
+def kruskal_mst(nodes, edges):
+    ds = DisjointSet(len(nodes))
+    node_index = {node: i for i, node in enumerate(nodes)}
+    mst_weight = 0
+    mst_edges = []
+    edges.sort(key=lambda x: x[0])
+    for weight, u, v in edges:
+        if ds.union(node_index[u], node_index[v]):
+            mst_weight += weight
+            mst_edges.append((u, v, weight))
+    return mst_weight, mst_edges
+
+
+# ---------- 5. DIJKSTRA ----------
+def dijkstra(graph, start):
+    distances = {node: float('inf') for node in graph}
+    distances[start] = 0
+    pq = [(0, start)]
+    while pq:
+        current_distance, current_node = heapq.heappop(pq)
+        if current_distance > distances[current_node]:
+            continue
+        for neighbor, weight in graph[current_node]:
+            distance = current_distance + weight
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                heapq.heappush(pq, (distance, neighbor))
+    return distances
+
+
+# ---------- 6. SINGLE SOURCE SHORTEST PATH (BFS) ----------
+def bfs_shortest_path(graph, start):
+    distances = {node: -1 for node in graph}
+    distances[start] = 0
+    queue = deque([start])
+    while queue:
+        current = queue.popleft()
+        for neighbor in graph[current]:
+            if distances[neighbor] == -1:
+                distances[neighbor] = distances[current] + 1
+                queue.append(neighbor)
+    return distances
+
+
+# ---------- 7. GREEDY BEST-FIRST SEARCH ----------
+def heuristic(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+def get_neighbors(node, rows, cols):
+    directions = [(1,0), (-1,0), (0,1), (0,-1)]
+    neighbors = []
+    for dr, dc in directions:
+        r, c = node[0] + dr, node[1] + dc
+        if 0 <= r < rows and 0 <= c < cols:
+            neighbors.append((r, c))
+    return neighbors
+
+def greedy_best_first_search(grid, start, goal):
+    rows, cols = len(grid), len(grid[0])
+    open_set = []
+    heapq.heappush(open_set, (heuristic(start, goal), start))
+    came_from = {}
+    visited = set()
+    while open_set:
+        _, current = heapq.heappop(open_set)
+        if current == goal:
+            path = []
+            while current in came_from:
+                path.append(current)
+                current = came_from[current]
+            path.append(start)
+            path.reverse()
+            return path
+        visited.add(current)
+        for neighbor in get_neighbors(current, rows, cols):
+            if grid[neighbor[0]][neighbor[1]] == 1 or neighbor in visited:
+                continue
+            if neighbor not in [n for _, n in open_set]:
+                came_from[neighbor] = current
+                heapq.heappush(open_set, (heuristic(neighbor, goal), neighbor))
+    return None
+
+
+# ---------- MENU ----------
+def main():
+    while True:
+        print("\n🌀 GREEDY ALGORITHM MENU 🌀")
+        print("1. Selection Sort")
+        print("2. Job Scheduling")
+        print("3. Prim's MST")
+        print("4. Kruskal's MST")
+        print("5. Dijkstra's Algorithm")
+        print("6. Single Source Shortest Path (BFS)")
+        print("7. Greedy Best-First Search")
+        print("8. Exit")
+
+        choice = input("Enter your choice: ")
+
+        if choice == '1':
+            arr = list(map(int, input("Enter numbers: ").split()))
+            print("Sorted array:", selection_sort(arr))
+
+        elif choice == '2':
+            num_jobs = int(input("Enter number of jobs: "))
+            jobs = []
+            print("Enter jobs in format: job_id deadline profit")
+            for _ in range(num_jobs):
+                job_id, d, p = input().split()
+                jobs.append((job_id, int(d), int(p)))
+            scheduled, profit = job_scheduling(jobs)
+            print("Scheduled jobs:", scheduled)
+            print("Total profit:", profit)
+
+        elif choice == '3':
+            n = int(input("Enter number of nodes: "))
+            nodes = [input(f"Node {i+1}: ") for i in range(n)]
+            graph = {node: [] for node in nodes}
+            m = int(input("Enter number of edges: "))
+            print("Enter edges as: node1 node2 weight")
+            for _ in range(m):
+                u, v, w = input().split()
+                w = int(w)
+                graph[u].append((v, w))
+                graph[v].append((u, w))
+            print("Prim MST total weight:", prim_mst(graph))
+
+        elif choice == '4':
+            n = int(input("Enter number of nodes: "))
+            nodes = [input(f"Node {i+1}: ") for i in range(n)]
+            m = int(input("Enter number of edges: "))
+            edges = []
+            print("Enter edges as: weight node1 node2")
+            for _ in range(m):
+                w, u, v = input().split()
+                edges.append((int(w), u, v))
+            weight, mst = kruskal_mst(nodes, edges)
+            print("Kruskal MST total weight:", weight)
+            print("Edges in MST:", mst)
+
+        elif choice == '5':
+            n = int(input("Enter number of nodes: "))
+            nodes = [input(f"Node {i+1}: ") for i in range(n)]
+            graph = {node: [] for node in nodes}
+            m = int(input("Enter number of edges: "))
+            print("Enter edges as: node1 node2 weight")
+            for _ in range(m):
+                u, v, w = input().split()
+                w = int(w)
+                graph[u].append((v, w))
+                graph[v].append((u, w))
+            start = input("Enter start node: ")
+            distances = dijkstra(graph, start)
+            print("Shortest distances:", distances)
+
+        elif choice == '6':
+            n = int(input("Enter number of nodes: "))
+            nodes = [input(f"Node {i+1}: ") for i in range(n)]
+            graph = {node: [] for node in nodes}
+            m = int(input("Enter number of edges: "))
+            print("Enter edges as: node1 node2")
+            for _ in range(m):
+                u, v = input().split()
+                graph[u].append(v)
+                graph[v].append(u)
+            start = input("Enter start node: ")
+            distances = bfs_shortest_path(graph, start)
+            print("Shortest distances:", distances)
+
+        elif choice == '7':
+            rows = int(input("Enter rows: "))
+            cols = int(input("Enter columns: "))
+            print("Enter grid row by row (0 open, 1 obstacle):")
+            grid = [list(map(int, input().split())) for _ in range(rows)]
+            start = tuple(map(int, input("Enter start (row col): ").split()))
+            goal = tuple(map(int, input("Enter goal (row col): ").split()))
+            path = greedy_best_first_search(grid, start, goal)
+            if path:
+                print("Path found:", path)
+            else:
+                print("No path found.")
+
+        elif choice == '8':
+            print("✨ Exiting the menu. Farewell, explorer of algorithms!")
+            break
+
+        else:
+            print("Invalid choice. Try again.")
+
+if __name__ == "__main__":
+    main()

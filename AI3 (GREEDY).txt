@@ -1,0 +1,220 @@
+A)Selection Sort
+def selection_sort(arr):
+    n = len(arr)
+    for i in range(n):
+        min_idx = i
+        for j in range(i + 1, n):
+            if arr[j] < arr[min_idx]:
+                min_idx = j
+        arr[i], arr[min_idx] = arr[min_idx], arr[i]
+    return arr
+
+arr = list(map(int, input("Enter numbers to sort (space-separated): ").split()))
+sorted_arr = selection_sort(arr)
+print("Selection Sorted array:", sorted_arr)
+
+2)Job Scheduling:
+def job_scheduling(jobs):
+    jobs.sort(key=lambda x: x[2], reverse=True)
+    max_deadline = max(job[1] for job in jobs)
+    result = [None] * (max_deadline + 1)
+    total_profit = 0
+
+    for job in jobs:
+        job_id, deadline, profit = job
+        for slot in range(deadline, 0, -1):
+            if result[slot] is None:
+                result[slot] = job_id
+                total_profit += profit
+                break
+
+    scheduled_jobs = [job for job in result if job is not None]
+    return scheduled_jobs, total_profit
+
+
+num_jobs = int(input("Enter number of jobs: "))
+jobs = []
+print("Enter jobs in format: job_id deadline profit")
+for _ in range(num_jobs):
+    job_id, deadline, profit = input().split()
+    jobs.append((job_id, int(deadline), int(profit)))
+
+scheduled, profit = job_scheduling(jobs)
+print("Scheduled jobs:", scheduled)
+print("Total profit:", profit)
+
+3)Prims:
+import heapq
+
+def prim_mst(graph):
+    start_node = next(iter(graph))
+    visited = set()
+    min_heap = [(0, start_node)]
+    total_weight = 0
+
+    while min_heap and len(visited) < len(graph):
+        weight, node = heapq.heappop(min_heap)
+        if node in visited:
+            continue
+        visited.add(node)
+        total_weight += weight
+
+        for neighbor, w in graph[node]:
+            if neighbor not in visited:
+                heapq.heappush(min_heap, (w, neighbor))
+
+    return total_weight
+
+
+n = int(input("Enter number of nodes: "))
+nodes = [input(f"Enter node {i+1}: ") for i in range(n)]
+graph = {node: [] for node in nodes}
+
+m = int(input("Enter number of edges: "))
+print("Enter edges as: node1 node2 weight")
+for _ in range(m):
+    u, v, w = input().split()
+    w = int(w)
+    graph[u].append((v, w))
+    graph[v].append((u, w))  # undirected graph
+
+mst_weight = prim_mst(graph)
+print("Prim MST total weight:", mst_weight)
+
+4)Kruskals:
+class DisjointSet:
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.rank = [0] * n
+
+    def find(self, u):
+        if self.parent[u] != u:
+            self.parent[u] = self.find(self.parent[u])
+        return self.parent[u]
+
+    def union(self, u, v):
+        root_u = self.find(u)
+        root_v = self.find(v)
+        if root_u == root_v:
+            return False
+        if self.rank[root_u] < self.rank[root_v]:
+            self.parent[root_u] = root_v
+        elif self.rank[root_v] < self.rank[root_u]:
+            self.parent[root_v] = root_u
+        else:
+            self.parent[root_v] = root_u
+            self.rank[root_u] += 1
+        return True
+
+
+def kruskal_mst(nodes, edges):
+    ds = DisjointSet(len(nodes))
+    node_index = {node: i for i, node in enumerate(nodes)}
+    mst_weight = 0
+    mst_edges = []
+    edges.sort(key=lambda x: x[0])
+
+    for weight, u, v in edges:
+        if ds.union(node_index[u], node_index[v]):
+            mst_weight += weight
+            mst_edges.append((u, v, weight))
+    return mst_weight, mst_edges
+
+
+n = int(input("Enter number of nodes: "))
+nodes = [input(f"Enter node {i+1}: ") for i in range(n)]
+m = int(input("Enter number of edges: "))
+edges = []
+
+print("Enter edges as: weight node1 node2")
+for _ in range(m):
+    w, u, v = input().split()
+    edges.append((int(w), u, v))
+
+weight, mst = kruskal_mst(nodes, edges)
+print("Kruskal MST total weight:", weight)
+print("Edges in MST:")
+for u, v, w in mst:
+    print(f"{u} - {v} (weight {w})")
+
+5)Dijkstras:
+import heapq
+
+def dijkstra(graph, start):
+    distances = {node: float('inf') for node in graph}
+    distances[start] = 0
+    pq = [(0, start)]
+
+    while pq:
+        current_distance, current_node = heapq.heappop(pq)
+        if current_distance > distances[current_node]:
+            continue
+        for neighbor, weight in graph[current_node]:
+            distance = current_distance + weight
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                heapq.heappush(pq, (distance, neighbor))
+    return distances
+
+
+n = int(input("Enter number of nodes: "))
+nodes = [input(f"Enter node {i+1}: ") for i in range(n)]
+graph = {node: [] for node in nodes}
+
+m = int(input("Enter number of edges: "))
+print("Enter edges in format: node1 node2 weight")
+for _ in range(m):
+    u, v, w = input().split()
+    w = int(w)
+    graph[u].append((v, w))
+    graph[v].append((u, w))  # undirected graph
+
+start = input("Enter the start node for Dijkstra's algorithm: ")
+distances = dijkstra(graph, start)
+
+print("\nShortest distances from", start)
+for node in nodes:
+    dist = distances[node]
+    if dist == float('inf'):
+        print(f"{node}: unreachable")
+    else:
+        print(f"{node}: {dist}")
+
+6)Single Source Shortest Path (BFS)
+from collections import deque
+
+def bfs_shortest_path(graph, start):
+    distances = {node: -1 for node in graph}
+    distances[start] = 0
+    queue = deque([start])
+
+    while queue:
+        current = queue.popleft()
+        for neighbor in graph[current]:
+            if distances[neighbor] == -1:  # not visited
+                distances[neighbor] = distances[current] + 1
+                queue.append(neighbor)
+    return distances
+
+
+n = int(input("Enter number of nodes: "))
+nodes = [input(f"Enter node {i+1}: ") for i in range(n)]
+graph = {node: [] for node in nodes}
+
+m = int(input("Enter number of edges: "))
+print("Enter edges as: node1 node2 (undirected)")
+for _ in range(m):
+    u, v = input().split()
+    graph[u].append(v)
+    graph[v].append(u)
+
+start = input("Enter the start node: ")
+distances = bfs_shortest_path(graph, start)
+
+print(f"\nShortest distances from node '{start}':")
+for node in nodes:
+    dist = distances[node]
+    if dist == -1:
+        print(f"{node}: Unreachable")
+    else:
+        print(f"{node}: {dist}")

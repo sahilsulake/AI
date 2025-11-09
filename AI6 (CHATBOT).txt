@@ -1,0 +1,52 @@
+# Simple Customer Service Chatbot
+
+def chatbot_response(user_input):
+    user_input = user_input.lower()
+
+    # Greetings
+    if "hello" in user_input or "hi" in user_input:
+        return "Hello there! How can I assist you today?"
+
+    # Product inquiry
+    elif "product" in user_input or "item" in user_input:
+        return "We have a wide range of products! Could you please specify which category you're interested in?"
+
+    # Price query
+    elif "price" in user_input or "cost" in user_input:
+        return "Our prices vary depending on the product. Can you tell me the product name or ID?"
+
+    # Delivery questions
+    elif "delivery" in user_input or "shipping" in user_input:
+        return "We offer free delivery on orders above ₹499. Delivery usually takes 3–5 business days."
+
+    # Return or refund
+    elif "return" in user_input or "refund" in user_input:
+        return "You can return any product within 7 days of delivery. Refunds are processed within 3–5 days after return pickup."
+
+    # Thanks
+    elif "thank" in user_input:
+        return "You're most welcome! 😊 Glad I could help."
+
+    # Goodbye
+    elif "bye" in user_input or "exit" in user_input or "quit" in user_input:
+        return "Thanks for chatting with us — have a lovely day! If you need more help, I'm here."
+
+    # Default fallback
+    else:
+        return "I'm not sure I understand that. Could you please rephrase your question?"
+
+# Main loop
+def chat():
+    print("🤖 Customer Support Bot: Hello! I'm your virtual assistant.")
+    print("Type 'bye' anytime to end the chat.\n")
+
+    while True:
+        user_input = input("You: ")
+        response = chatbot_response(user_input)
+        print("Bot:", response)
+
+        if "bye" in user_input.lower() or "exit" in user_input.lower() or "quit" in user_input.lower():
+            break
+
+# Run chatbot
+chat()
